@@ -1,9 +1,11 @@
 from fastapi import FastAPI, HTTPException
-from app.database import client, db
-from app.services.analytics_service import get_student_analytics
-
+from app.database import client
+from app.routes import analytic_routes, class_routes
 
 app = FastAPI()
+
+app.include_router(analytic_routes.router)
+app.include_router(class_routes.router)
 
 @app.get("/")
 def read_root():
@@ -15,15 +17,3 @@ def check_db():
     client.admin.command("ping")
     return {"database": "connected"}
 
-@app.get("/students/{student_id}/results")
-def get_student_results(student_id: str):
-    results = list(db["quiz_results"].find({"student_id": student_id}, {"_id": 0}))
-    return results
-
-
-@app.get("/students/{student_id}/analytics")
-def student_analytics(student_id: str):
-    analytics = get_student_analytics(student_id)
-    if analytics is None:
-        raise HTTPException(status_code=404, detail="Student not found")
-    return analytics

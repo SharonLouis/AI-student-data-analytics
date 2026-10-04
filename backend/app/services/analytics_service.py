@@ -48,3 +48,22 @@ def get_student_analytics(student_id: str):
         "weakest_topic": weakest_topic,
         "topic_performance": topic_performance,
     }
+def get_class_ranking():
+    all_results = list(db["quiz_results"].find({},{"_id":0}))
+    if not all_results:
+        return None
+    df = pd.DataFrame(all_results)
+    totals = df.groupby(["student_id","student_name"])[["score","total_marks"]].sum().reset_index()
+    totals["percentage"] = (totals["score"]/totals["total_marks"]*100).round(2)
+
+    totals["rank"] = totals["percentage"].rank(method ="min" , ascending = False).astype(int) 
+    totals = totals.sort_values("rank")
+
+    class_average = round(float(totals["percentage"].mean()),2)
+
+    students = totals[["rank","student_id","student_name","percentage"]].to_dict(orient = "records")
+    return{
+    "class_average":class_average,
+    "total_students":len(students),
+    "students":students,
+}
