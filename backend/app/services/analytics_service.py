@@ -1,5 +1,6 @@
 import pandas as pd
 from app.database import db
+WEAK_TOPIC_THRESHOLD = 70
 
 
 def get_student_analytics(student_id: str):
@@ -36,6 +37,10 @@ def get_student_analytics(student_id: str):
         completion_percentage = progress_df["completed"].mean()*100
     else :
         completion_percentage = 0
+    weak_topics=[]
+    for topic , percentage in topic_performance.items():
+        if percentage < WEAK_TOPIC_THRESHOLD:
+            weak_topics.append(topic)
     return {
         "student_id": student_id,
         "student_name": df["student_name"].iloc[0],
@@ -47,6 +52,7 @@ def get_student_analytics(student_id: str):
         "strongest_topic": strongest_topic,
         "weakest_topic": weakest_topic,
         "topic_performance": topic_performance,
+        "weak_topics":weak_topics,
     }
 def get_class_ranking():
     all_results = list(db["quiz_results"].find({},{"_id":0}))
